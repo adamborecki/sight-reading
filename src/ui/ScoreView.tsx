@@ -1,21 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GeneratedExercise } from '../engine/types'
+import type { NoteLabelMode } from '../engine/theory'
 import { renderExercise, type RenderResult } from '../notation/render'
 
 interface Props {
   exercise: GeneratedExercise
   cursorNoteId: string | null
   hiddenMeasures: ReadonlySet<number>
+  labelMode: NoteLabelMode
 }
 
-export default function ScoreView({ exercise, cursorNoteId, hiddenMeasures }: Props) {
+export default function ScoreView({ exercise, cursorNoteId, hiddenMeasures, labelMode }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [result, setResult] = useState<RenderResult | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
-    setResult(renderExercise(containerRef.current, exercise))
-  }, [exercise])
+    setResult(renderExercise(containerRef.current, exercise, labelMode))
+  }, [exercise, labelMode])
 
   const cursorBox = cursorNoteId ? result?.noteBoxes.get(cursorNoteId) : null
 

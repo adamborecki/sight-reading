@@ -2,37 +2,17 @@ import * as Tone from 'tone'
 import type { GeneratedExercise } from '../engine/types'
 import { midiToNoteName } from '../engine/theory'
 import { beatsPerMeasure, parseTimeSignature } from '../engine/rhythm'
+import { getClickSynth, getMelodySynth } from './synths'
 
-let melodySynth: Tone.PolySynth<Tone.Synth> | null = null
-let clickSynth: Tone.Synth | null = null
-
-function ensureSynths(): { melody: Tone.PolySynth<Tone.Synth>; click: Tone.Synth } {
-  if (!melodySynth) {
-    melodySynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: { attack: 0.01, decay: 0.1, sustain: 0.6, release: 0.3 },
-    }).toDestination()
-  }
-  if (!clickSynth) {
-    clickSynth = new Tone.Synth({
-      oscillator: { type: 'square' },
-      envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 },
-    }).toDestination()
-    clickSynth.volume.value = -12
-  }
-  return { melody: melodySynth, click: clickSynth }
-}
-
-/** Must be called from a user gesture (e.g. a click handler) before any audio plays. */
-export async function unlockAudio(): Promise<void> {
-  await Tone.start()
-}
+export { unlockAudio } from './synths'
 
 export interface PlaybackOptions {
   metronome: boolean
   countIn: boolean
   /** Overrides the exercise's baked-in tempo for this playback (practice tempo control). */
   tempoBpm?: number
+  /** Play every pitched note on a single fixed pitch, to isolate rhythm from pitch reading. */
+  rhythmOnly?: boolean
   onNoteStart?: (noteId: string) => void
   onCountInBeat?: (beatsRemaining: number) => void
   onCursorClear?: () => void
@@ -45,7 +25,8 @@ export interface PlaybackController {
 }
 
 export function playExercise(exercise: GeneratedExercise, options: PlaybackOptions): PlaybackController {
-  const { melody, click } = ensureSynths()
+  const melody = getMelodySynth()
+  const click = getClickSynth()
   const transport = Tone.getTransport()
   transport.stop()
   transport.cancel(0)
@@ -88,8 +69,12 @@ export function playExercise(exercise: GeneratedExercise, options: PlaybackOptio
       const t = measureStartSeconds + note.offset * secondsPerQuarter
       const durSeconds = note.quarterLength * secondsPerQuarter * 0.95
       if (!note.isRest && note.midi !== null) {
-        const noteName = toneNoteName(note.midi, exercise)
-        transport.scheduleOnce((time) => melody.triggerAttackRelease(noteName, durSeconds, time), t)
+        if (options.rhythmOnly) {
+          transport.scheduleOnce((time) => click.triggerAttackRelease('A4', durSeconds, time), t)
+        } else {
+          const noteName = toneNoteName(note.midi, exercise)
+          transport.scheduleOnce((time) => melody.triggerAttackRelease(noteName, durSeconds, time), t)
+        }
       }
       if (options.onNoteStart) {
         transport.scheduleOnce((time) => {

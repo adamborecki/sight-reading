@@ -13,6 +13,30 @@ function AudioCell({ blob }: { blob: Blob | null }) {
   return <audio controls src={url} />
 }
 
+const RATING_FACES: Record<1 | 2 | 3, string> = { 1: '😕', 2: '🙂', 3: '🎉' }
+const RATING_LABELS: Record<'rhythm' | 'pitch' | 'musicality', string> = {
+  rhythm: 'Rhythm',
+  pitch: 'Pitch',
+  musicality: 'Musicality',
+}
+
+function SelfRatingBadges({ rating }: { rating: PracticeSession['selfRating'] }) {
+  if (!rating || (!rating.rhythm && !rating.pitch && !rating.musicality)) return null
+  return (
+    <div className="rating-badges">
+      {(Object.keys(RATING_LABELS) as Array<keyof typeof RATING_LABELS>).map((key) => {
+        const value = rating[key]
+        if (!value) return null
+        return (
+          <span key={key} className="rating-badge" title={RATING_LABELS[key]}>
+            {RATING_LABELS[key]} {RATING_FACES[value]}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function PracticeLogView({ sessions, onLoad, onDelete }: Props) {
   if (sessions.length === 0) {
     return (
@@ -38,6 +62,7 @@ export default function PracticeLogView({ sessions, onLoad, onDelete }: Props) {
               </span>
             </div>
             <AudioCell blob={s.audio} />
+            <SelfRatingBadges rating={s.selfRating} />
             <div className="field-row">
               <button type="button" onClick={() => onLoad(s)}>
                 View score

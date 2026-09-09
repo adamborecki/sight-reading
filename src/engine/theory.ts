@@ -105,6 +105,32 @@ export function midiToNoteName(midi: number, key: KeyDefinition): { letter: stri
   return { letter, octave, vexKey: `${vexLetter}/${octave}` }
 }
 
+// Movable-do labels by semitone distance from the tonic (0-11). Diatonic natural-minor degrees
+// are marked flat (b3/b6/b7) relative to the major reference, matching standard scale-degree
+// notation; a "raised" occurrence of one of those (e.g. a harmonic-minor leading tone) is simply
+// the unflatted number. Chromatic non-diatonic tones elsewhere use a sharp of the lower degree.
+const MAJOR_DEGREE_BY_SEMITONE = ['1', '#1', '2', '#2', '3', '4', '#4', '5', '#5', '6', '#6', '7']
+const MAJOR_SOLFEGE_BY_SEMITONE = ['do', 'di', 're', 'ri', 'mi', 'fa', 'fi', 'sol', 'si', 'la', 'li', 'ti']
+const MINOR_DEGREE_BY_SEMITONE = ['1', '#1', '2', 'b3', '3', '4', '#4', '5', 'b6', '6', 'b7', '7']
+const MINOR_SOLFEGE_BY_SEMITONE = ['do', 'di', 're', 'me', 'mi', 'fa', 'fi', 'sol', 'le', 'la', 'te', 'ti']
+
+export type NoteLabelMode = 'none' | 'scaleDegree' | 'solfege'
+
+/** Movable-do scale-degree number or solfège syllable for a pitch, relative to the given key. */
+export function scaleDegreeLabel(midi: number, key: KeyDefinition, mode: 'scaleDegree' | 'solfege'): string {
+  const pitchClass = ((midi % 12) + 12) % 12
+  const semitonesFromTonic = ((pitchClass - key.tonicPitchClass) % 12 + 12) % 12
+  const table =
+    key.mode === 'major'
+      ? mode === 'scaleDegree'
+        ? MAJOR_DEGREE_BY_SEMITONE
+        : MAJOR_SOLFEGE_BY_SEMITONE
+      : mode === 'scaleDegree'
+        ? MINOR_DEGREE_BY_SEMITONE
+        : MINOR_SOLFEGE_BY_SEMITONE
+  return table[semitonesFromTonic]
+}
+
 /** MIDI numbers for common note-name anchors, used by range pickers. */
 export const NOTE_NAME_TO_MIDI: Record<string, number> = (() => {
   const map: Record<string, number> = {}

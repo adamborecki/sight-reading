@@ -1,9 +1,14 @@
+import type { NoteLabelMode } from '../engine/theory'
+
 interface Props {
   isPlaying: boolean
   onPlay: () => void
   onStop: () => void
   tempoBpm: number
   onTempoChange: (bpm: number) => void
+  fullTempoBpm: number
+  rhythmOnly: boolean
+  onRhythmOnlyToggle: (on: boolean) => void
   metronomeOn: boolean
   onMetronomeToggle: (on: boolean) => void
   countInOn: boolean
@@ -13,6 +18,8 @@ interface Props {
   onDisappearingToggle: (on: boolean) => void
   onStartReading: () => void
   onResetReading: () => void
+  labelMode: NoteLabelMode
+  onLabelModeChange: (mode: NoteLabelMode) => void
   onPrint: () => void
 }
 
@@ -22,6 +29,9 @@ export default function PracticeControls({
   onStop,
   tempoBpm,
   onTempoChange,
+  fullTempoBpm,
+  rhythmOnly,
+  onRhythmOnlyToggle,
   metronomeOn,
   onMetronomeToggle,
   countInOn,
@@ -31,6 +41,8 @@ export default function PracticeControls({
   onDisappearingToggle,
   onStartReading,
   onResetReading,
+  labelMode,
+  onLabelModeChange,
   onPrint,
 }: Props) {
   return (
@@ -47,10 +59,14 @@ export default function PracticeControls({
           </button>
         )}
         <label>
-          Tempo: {tempoBpm} bpm
+          Tempo: {tempoBpm} bpm {tempoBpm < fullTempoBpm && <span className="hint">(full tempo: {fullTempoBpm})</span>}
           <input type="range" min={40} max={200} value={tempoBpm} onChange={(e) => onTempoChange(Number(e.target.value))} />
         </label>
       </div>
+      <p className="hint tip">
+        💡 Once you start, keep a steady tempo and keep going — even through a wrong note. Stopping to fix mistakes is
+        practicing, not sight-reading. Start slower than full tempo and build up speed over a few tries.
+      </p>
 
       <div className="field-row">
         <label className="checkbox">
@@ -64,6 +80,21 @@ export default function PracticeControls({
         {countInBeatsRemaining !== null && countInBeatsRemaining > 0 && (
           <span className="count-in-badge">{countInBeatsRemaining}</span>
         )}
+        <label className="checkbox">
+          <input type="checkbox" checked={rhythmOnly} onChange={(e) => onRhythmOnlyToggle(e.target.checked)} />
+          🥁 Rhythm only
+        </label>
+      </div>
+
+      <div className="field-row">
+        <label>
+          Note labels
+          <select value={labelMode} onChange={(e) => onLabelModeChange(e.target.value as NoteLabelMode)}>
+            <option value="none">None</option>
+            <option value="scaleDegree">Scale degrees (1–7)</option>
+            <option value="solfege">Solfège (movable do)</option>
+          </select>
+        </label>
       </div>
 
       <div className="field-row">

@@ -14,7 +14,7 @@ import {
   VoiceMode,
 } from 'vexflow'
 import type { GeneratedExercise, GeneratedNote } from '../engine/types'
-import { midiToNoteName } from '../engine/theory'
+import { midiToNoteName, scaleDegreeLabel, type NoteLabelMode } from '../engine/theory'
 import { parseTimeSignature } from '../engine/rhythm'
 
 const MEASURES_PER_ROW = 4
@@ -49,7 +49,11 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out
 }
 
-export function renderExercise(container: HTMLDivElement, exercise: GeneratedExercise): RenderResult {
+export function renderExercise(
+  container: HTMLDivElement,
+  exercise: GeneratedExercise,
+  labelMode: NoteLabelMode = 'none',
+): RenderResult {
   container.innerHTML = ''
   const rows = chunk(exercise.measures, MEASURES_PER_ROW)
   const timeSig = parseTimeSignature(exercise.timeSignature)
@@ -85,7 +89,7 @@ export function renderExercise(container: HTMLDivElement, exercise: GeneratedExe
       }
       stave.setContext(context).draw()
 
-      const staveNotes = measureNotes.map((n) => buildStaveNote(n, exercise))
+      const staveNotes = measureNotes.map((n) => buildStaveNote(n, exercise, labelMode))
       const dotted = staveNotes.filter((_, i) => measureNotes[i].dots > 0)
       if (dotted.length > 0) Dot.buildAndAttach(dotted, { all: true })
 
@@ -124,7 +128,7 @@ function measureWidth(rowIndex: number, indexInRow: number): number {
   return PLAIN_MEASURE_WIDTH
 }
 
-function buildStaveNote(note: GeneratedNote, exercise: GeneratedExercise): StaveNote {
+function buildStaveNote(note: GeneratedNote, exercise: GeneratedExercise, labelMode: NoteLabelMode): StaveNote {
   const keys = note.isRest
     ? [REST_KEY_BY_CLEF[exercise.clef] ?? 'b/4']
     : [midiToNoteName(note.midi as number, exercise.key).vexKey]
@@ -146,6 +150,12 @@ function buildStaveNote(note: GeneratedNote, exercise: GeneratedExercise): Stave
   if (note.dynamic) {
     const ann = new Annotation(note.dynamic).setFont('Times', 12, 'italic')
     ann.setVerticalJustification(AnnotationVerticalJustify.BOTTOM)
+    staveNote.addModifier(ann)
+  }
+  if (!note.isRest && labelMode !== 'none') {
+    const label = scaleDegreeLabel(note.midi as number, exercise.key, labelMode)
+    const ann = new Annotation(label).setFont('Arial', 10, '')
+    ann.setVerticalJustification(AnnotationVerticalJustify.TOP)
     staveNote.addModifier(ann)
   }
 

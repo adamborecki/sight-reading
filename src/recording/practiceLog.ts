@@ -4,11 +4,19 @@ const DB_NAME = 'sight-reading'
 const DB_VERSION = 1
 const STORE = 'practiceSessions'
 
+/** Quick self-assessment, 1 (needs work) to 3 (great) — a lightweight stand-in until auto-grading exists. */
+export interface SelfRating {
+  rhythm?: 1 | 2 | 3
+  pitch?: 1 | 2 | 3
+  musicality?: 1 | 2 | 3
+}
+
 export interface PracticeSession {
   id: string
   createdAt: number
   exercise: GeneratedExercise
   audio: Blob | null
+  selfRating?: SelfRating
 }
 
 function openDb(): Promise<IDBDatabase> {
@@ -25,12 +33,17 @@ function openDb(): Promise<IDBDatabase> {
   })
 }
 
-export async function saveSession(exercise: GeneratedExercise, audio: Blob | null): Promise<PracticeSession> {
+export async function saveSession(
+  exercise: GeneratedExercise,
+  audio: Blob | null,
+  selfRating?: SelfRating,
+): Promise<PracticeSession> {
   const session: PracticeSession = {
     id: `session-${exercise.id}-${Date.now()}`,
     createdAt: Date.now(),
     exercise,
     audio,
+    selfRating,
   }
   const db = await openDb()
   await new Promise<void>((resolve, reject) => {
