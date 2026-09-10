@@ -32,7 +32,7 @@ export default function GeneratorPanel({ constraints, onConstraintsChange, onSel
       </div>
 
       <button type="button" className="link-button" onClick={() => setCustomOpen((v) => !v)}>
-        {customOpen ? 'Hide custom constraints' : 'Customize constraints…'}
+        {customOpen ? '⚙️ Hide settings' : '⚙️ Settings'}
       </button>
 
       {customOpen && <CustomConstraintsForm constraints={constraints} onChange={onConstraintsChange} />}

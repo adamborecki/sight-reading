@@ -28,6 +28,18 @@ const REST_KEY_BY_CLEF: Record<string, string> = { treble: 'b/4', bass: 'd/3' }
 
 const ARTICULATION_CODE: Record<string, string> = { staccato: 'a.', accent: 'a>', tenuto: 'a-' }
 
+// SMuFL private-use-area codepoints for the music font's dynamics letters (matches VexFlow's own
+// TextDynamics.GLYPHS internally) — lets a dynamic marking render as proper engraved glyphs via a
+// plain Annotation modifier instead of a separate voice, which TextDynamics would otherwise need.
+const DYNAMIC_GLYPH_CODEPOINT: Record<string, number> = { p: 0xe520, m: 0xe521, f: 0xe522 }
+
+function dynamicGlyphText(mark: string): string {
+  return mark
+    .split('')
+    .map((ch) => (ch in DYNAMIC_GLYPH_CODEPOINT ? String.fromCodePoint(DYNAMIC_GLYPH_CODEPOINT[ch]) : ''))
+    .join('')
+}
+
 export interface NoteBox {
   x: number
   y: number
@@ -152,7 +164,7 @@ function buildStaveNote(note: GeneratedNote, exercise: GeneratedExercise, labelM
     staveNote.addModifier(new Articulation(code).setPosition(3))
   }
   if (note.dynamic) {
-    const ann = new Annotation(note.dynamic).setFont('Times', 12, 'italic')
+    const ann = new Annotation(dynamicGlyphText(note.dynamic)).setFont('Bravura,Academico', 30)
     ann.setVerticalJustification(AnnotationVerticalJustify.BOTTOM)
     staveNote.addModifier(ann)
   }
