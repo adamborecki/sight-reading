@@ -93,6 +93,11 @@ export function renderExercise(
       const dotted = staveNotes.filter((_, i) => measureNotes[i].dots > 0)
       if (dotted.length > 0) Dot.buildAndAttach(dotted, { all: true })
 
+      // Must run before voice.draw(): generating beams marks each note as beamed, which is what
+      // tells StemmableNote to skip drawing its own flag. Doing this after draw() left every
+      // beamed note rendering both an individual flag AND the beam on top of it.
+      const beams = Beam.generateBeams(staveNotes, { groups: Beam.getDefaultBeamGroups(exercise.timeSignature) })
+
       const voice = new Voice({ numBeats: timeSig.numerator, beatValue: timeSig.denominator }).setMode(VoiceMode.SOFT)
       voice.addTickables(staveNotes)
 
@@ -100,7 +105,6 @@ export function renderExercise(
       voice.setStave(stave)
       voice.draw(context, stave)
 
-      const beams = Beam.generateBeams(staveNotes, { groups: Beam.getDefaultBeamGroups(exercise.timeSignature) })
       beams.forEach((b) => b.setContext(context).draw())
 
       // Use absolute X + tick width rather than getBoundingBox(), which (for beamed notes in
