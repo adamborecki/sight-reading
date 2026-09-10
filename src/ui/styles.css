@@ -7,6 +7,9 @@
   --accent: #9a3b2b;
   --accent-contrast: #ffffff;
   --cursor: #d68a1c;
+  /* Sheet music reads as ink on paper regardless of app theme, so this stays fixed in both modes. */
+  --score-bg: #ffffff;
+  --score-border: #d9d5cc;
   color-scheme: light;
 }
 
@@ -232,7 +235,7 @@ label.checkbox {
 
 .score-view {
   position: relative;
-  background: var(--surface);
+  background: var(--score-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px;
@@ -254,8 +257,8 @@ label.checkbox {
 
 .score-measure-cover {
   position: absolute;
-  background: var(--surface);
-  border-left: 1px dashed var(--border);
+  background: var(--score-bg);
+  border-left: 1px dashed var(--score-border);
 }
 
 .count-in-badge {
